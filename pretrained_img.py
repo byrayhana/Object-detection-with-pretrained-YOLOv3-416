@@ -8,24 +8,16 @@ import cv2
 import numpy as np
 img=cv2.imread("people.jpg")
 #print(img)
-#Y'OLO algoritmasında resmin en ve boyuna ihtiyacım var
 '''
 img.shape
-Out[9]: (427, 640, 3) boy en kanal
+Out[9]: (427, 640, 3) 
 '''
 img_width=img.shape[1]
 img_height=img.shape[0]  
-''' 1/255 skala değeri YOLO tarafından belirtilmiş en optimal deger
-     416 indirdiğimiz modül 
-     swapRB RGB'ye çevirme 
-     crop resim kırpmak
-'''
 img_blob=cv2.dnn.blobFromImage(img,1/255,(416,416),swapRB=True,crop=False)
 ''' img_blob.shape
-Out[13]: (1, 3, 416, 416) 
-labels=["person","phone",...] kendi modülümü yamış olsaydı ne kadar nesne
- tanıdığını ve isimleri buraya yazmam gerekiyor'''
-#%% Label ve colors ayarlama
+Out[13]: (1, 3, 416, 416) '''
+#%% Label and colors
 labels=["person","bicycle","car","motorcycle","airplane","bus","train","truck","boat",
                     "trafficlight","firehydrant","stopsign","parkingmeter","bench","bird","cat",
                     "dog","horse","sheep","cow","elephant","bear","zebra","giraffe","backpack",
@@ -38,11 +30,10 @@ labels=["person","bicycle","car","motorcycle","airplane","bus","train","truck","
                     "book","clock","vase","scissors","teddybear","hairdrier","toothbrush"]
 colors=np.random.uniform(0,255,size=(len(labels),3))
 
-#%% layers ayarlama
+#%% layers 
 
-model=cv2.dnn.readNetFromDarknet("pretrained_model/yolov3.cfg", "pretrained_model/yolov3.weights")  #cnfg dosyasını
-layers=model.getLayerNames()  #modelden layersleri çekiyorum
-#layersta outputları ayıklamak
+model=cv2.dnn.readNetFromDarknet("pretrained_model/yolov3.cfg", "pretrained_model/yolov3.weights")  
+layers=model.getLayerNames()  
 output_layers=[layers[layer-1] for layer in model.getUnconnectedOutLayers()]   
 model.setInput(img_blob)
 detection_layers=model.forward(output_layers)
@@ -50,15 +41,14 @@ detection_layers=model.forward(output_layers)
 #%% 
 for detection_layer in detection_layers:
     for object_detection in detection_layer:
-        scores=object_detection[5:]  #ilk5 değer bounding değerleri tutuyor 5ten sonrakilerle ilgileniyorum
-        predicted_id=np.argmax(scores)  #en yüksek score'a sahip olan 
-        confidence=scores[predicted_id]  #güvenlik scoru
+        scores=object_detection[5:]  
+        predicted_id=np.argmax(scores)  
+        confidence=scores[predicted_id]  
         
         if confidence > 0.50:
             label=labels[predicted_id]
             #bounding
             bounding_box=object_detection[0:4] * np.array([img_width,img_height,img_width,img_height]) 
-            #ilk 4 değer çok küçük ve yeterli olmadığı için genişletiourm
             (box_center_x,box_center_y,box_width,box_height)=bounding_box.astype("int")
             start_x=int(box_center_x - (box_width/2))
             start_y=int(box_center_y - (box_height/2))
